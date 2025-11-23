@@ -1,0 +1,31 @@
+architecture-beta
+    %% Groups
+    group client(browser)[Client]
+    group fe(app)[Frontend]
+    group be_pres(server)[Backend_Presentation]
+    group be_app(app)[Backend_Application]
+    group be_pers(database)[Backend_Persistence]
+    group store(disk)[Datastore]
+
+    %% Client
+    service user(browser)[UserBrowser] in client
+
+    %% Frontend
+    service spa(app)[ReactSPA] in fe
+
+    %% Backend
+    service routes(server)[Routes] in be_pres
+    service services(app)[Services] in be_app
+    service repoif(database)[RepoIF] in be_pers
+    service repoimpl(database)[RepoImpl] in be_pers
+
+    %% Store
+    service data(disk)[DataStore] in store
+
+    %% Connections (MUST use side-hints)
+    user:R -- L:spa
+    spa:R -- L:routes
+    routes:B -- T:services
+    services:B -- T:repoif
+    repoif:B -- T:repoimpl
+    repoimpl:B -- T:data

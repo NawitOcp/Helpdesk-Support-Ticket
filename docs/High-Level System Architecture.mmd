@@ -1,0 +1,24 @@
+architecture-beta
+    %% Groups
+    group client(browser)[Client]
+    group fe(app)[Frontend]
+    group be(server)[Backend]
+    group data(database)[Datastore]
+
+    %% Services
+    service user(browser)[Browser] in client
+
+    service spa(app)[ReactSPA] in fe
+
+    service api(server)[ExpressAPI] in be
+    service appsvc(server)[AppLayer] in be
+    service repo(database)[RepoLayer] in be
+
+    service store(disk)[DataStore] in data
+
+    %% Connections
+    user:R -- L:spa
+    spa:R -- L:api
+    api:B -- T:appsvc
+    appsvc:B -- T:repo
+    repo:B -- T:store

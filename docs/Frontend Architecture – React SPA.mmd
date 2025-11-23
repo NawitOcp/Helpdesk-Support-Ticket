@@ -1,0 +1,38 @@
+architecture-beta
+    %% Groups
+    group pages(app)[Pages]
+    group comps(server)[Components]
+    group api(cloud)[ApiLayer]
+
+    %% Pages
+    service listp(app)[ListPage] in pages
+    service detailp(app)[DetailPage] in pages
+    service createp(app)[CreatePage] in pages
+    service editp(app)[EditPage] in pages
+
+    %% Components
+    service ticketrow(server)[TicketRow] in comps
+    service dropdown(server)[Dropdown] in comps
+    service statusbadge(server)[StatusBadge] in comps
+    service formfields(server)[FormFields] in comps
+
+    %% API Layer
+    service apiclient(cloud)[ApiClient] in api
+    service rq(cloud)[ReactQuery] in api
+
+    %% Connections
+    listp:B -- T:ticketrow
+    listp:B -- T:dropdown
+    listp:B -- T:statusbadge
+
+    detailp:B -- T:statusbadge
+
+    createp:B -- T:formfields
+    editp:B -- T:formfields
+
+    listp:R -- L:rq
+    detailp:R -- L:rq
+    createp:R -- L:rq
+    editp:R -- L:rq
+
+    rq:B -- T:apiclient

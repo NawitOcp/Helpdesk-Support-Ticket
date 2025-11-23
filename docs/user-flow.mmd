@@ -1,0 +1,45 @@
+flowchart LR
+    %% User Flow with Colored Nodes + UC Mapping
+
+    %% Style definitions
+    classDef list fill:#D0E8FF,stroke:#1E88E5,color:#000
+    classDef create fill:#DFFFD6,stroke:#43A047,color:#000
+    classDef detail fill:#FFF7CC,stroke:#FDD835,color:#000
+    classDef edit fill:#FFE0E0,stroke:#E53935,color:#000
+    classDef board fill:#E8D9FF,stroke:#8E24AA,color:#000
+    classDef user fill:#E0E0E0,stroke:#616161,color:#000
+
+    %% Nodes
+    U[User]:::user
+
+    L[Tickets List<br/>UC-005/006/007]:::list
+    C[Create Ticket<br/>UC-001]:::create
+    D[Ticket Detail<br/>UC-002/004]:::detail
+    E[Edit Ticket<br/>UC-003]:::edit
+    B[Kanban Board<br/>Optional]:::board
+
+    %% Entry
+    U --> L
+
+    %% From List
+    L -->|Create new ticket| C
+    L -->|View ticket| D
+    L -->|Board view| B
+
+    %% From Create
+    C -->|Submit| D
+    C -->|Cancel| L
+
+    %% From Detail
+    D -->|Edit info| E
+    D -->|Change status| D
+    D -->|Back| L
+    D -->|Board view| B
+
+    %% From Edit
+    E -->|Save| D
+    E -->|Cancel| D
+
+    %% From Board
+    B -->|Open ticket| D
+    B -->|Back to list| L

@@ -1,0 +1,19 @@
+architecture-beta
+    %% Groups
+    group pres(server)[PresentationLayer]
+    group appl(app)[ApplicationLayer]
+    group pers(database)[PersistenceLayer]
+    group data(disk)[DataStore]
+
+    %% Services
+    service routes(server)[Routes] in pres
+    service services(app)[Services] in appl
+    service repoif(database)[RepoIF] in pers
+    service repoimpl(database)[RepoImpl] in pers
+    service store(disk)[Store] in data
+
+    %% Connections
+    routes:B -- T:services
+    services:B -- T:repoif
+    repoif:B -- T:repoimpl
+    repoimpl:B -- T:store
