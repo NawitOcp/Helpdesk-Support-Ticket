@@ -1,11 +1,27 @@
 import 'dotenv/config';
 import app from './app.js';
+import { initDatastore } from './infrastructure/datastore/index.js';
+import config from './config/env.js';
 
-const PORT = process.env.PORT || 3000;
+const PORT = config.port;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
-  console.log(`📋 API endpoints available at http://localhost:${PORT}/api`);
-  console.log(`💾 Datastore type: ${process.env.DATASTORE_TYPE || 'memory'}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+// Initialize datastore and start server
+const startServer = async () => {
+  try {
+    // Initialize datastore
+    await initDatastore();
+    
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on http://localhost:${PORT}`);
+      console.log(`📋 API endpoints available at http://localhost:${PORT}/api`);
+      console.log(`💾 Datastore type: ${config.datastoreType}`);
+      console.log(`🌍 Environment: ${config.nodeEnv}`);
+    });
+  } catch (err) {
+    console.error('❌ Failed to start server:', err);
+    process.exit(1);
+  }
+};
+
+startServer();

@@ -18,8 +18,13 @@ const TicketDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   
+  // Debug
+  console.log('📄 TicketDetailPage - ID from URL:', id);
+  
   // Fetch ticket data
   const { ticket, loading, error, refetch } = useTicketDetailQuery(id);
+  
+  console.log('📊 Ticket data:', { ticket, loading, error });
   
   // Status update mutation
   const { updateStatus, loading: updatingStatus } = useUpdateStatusMutation();

@@ -12,7 +12,10 @@ const useTicketDetailQuery = (id) => {
   const [error, setError] = useState(null);
   
   const fetchTicket = async () => {
+    console.log('🔍 Fetching ticket with ID:', id);
+    
     if (!id) {
+      console.warn('⚠️ No ticket ID provided');
       setLoading(false);
       return;
     }
@@ -22,9 +25,13 @@ const useTicketDetailQuery = (id) => {
     
     try {
       const response = await ticketsApiClient.getTicket(id);
-      setTicket(response);
+      console.log('✅ Ticket fetched successfully:', response);
+      
+      // Handle response format - might be { data: ticket } or just ticket
+      const ticketData = response.data || response;
+      setTicket(ticketData);
     } catch (err) {
-      console.error('Error fetching ticket:', err);
+      console.error('❌ Error fetching ticket:', err);
       setError(err.message || 'Failed to fetch ticket');
       setTicket(null);
     } finally {
