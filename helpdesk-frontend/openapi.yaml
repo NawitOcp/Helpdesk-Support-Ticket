@@ -1,0 +1,737 @@
+openapi: 3.1.0
+info:
+  title: Helpdesk Support Ticket Management System API
+  description: |
+    RESTful API for managing support tickets throughout their lifecycle.
+    
+    **Key Features:**
+    - Create and manage support tickets
+    - Track ticket status with enforced state transitions
+    - Filter, sort, and paginate ticket lists
+    - No delete operations allowed
+    
+    **Status Workflow:**
+    - `pending` → `accepted` | `rejected`
+    - `accepted` → `resolved` | `rejected`
+    - `resolved` → (final state)
+    - `rejected` → (final state)
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5000/api
+    description: Development server
+  - url: https://api.example.com/api
+    description: Production server
+
+tags:
+  - name: Tickets
+    description: Ticket management operations
+
+security: []  # No authentication required (optional: can add API key/Bearer token here)
+
+paths:
+  /tickets:
+    get:
+      tags:
+        - Tickets
+      summary: List tickets
+      description: Retrieve a list of tickets with optional filtering, sorting, and pagination
+      operationId: listTickets
+      parameters:
+        - name: status
+          in: query
+          description: Filter by ticket status (supports multiple values). Can be sent as ?status=pending&status=accepted or ?status=pending,accepted
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [pending, accepted, resolved, rejected]
+          style: form
+          explode: true
+          examples:
+            single:
+              value: [pending]
+              summary: Single status filter
+            multiple:
+              value: [pending, accepted]
+              summary: Multiple status filter
+        - name: sortBy
+          in: query
+          description: Field to sort by
+          required: false
+          schema:
+            type: string
+            enum: [status, createdAt, updatedAt]
+            default: updatedAt
+        - name: sortOrder
+          in: query
+          description: Sort direction
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Successful response with ticket list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketListResponse'
+              examples:
+                default:
+                  value:
+                    success: true
+                    data:
+                      - id: 550e8400-e29b-41d4-a716-446655440000
+                        title: Cannot login to system
+                        description: Getting error 401 when trying to login
+                        contact:
+                          name: John Doe
+                          email: john.doe@example.com
+                          phone: "+1-555-0100"
+                        status: pending
+                        createdAt: "2025-01-15T10:30:00Z"
+                        updatedAt: "2025-01-15T10:30:00Z"
+                      - id: 660e8400-e29b-41d4-a716-446655440001
+                        title: Feature request for dark mode
+                        description: Would like to have dark mode support in the application
+                        contact:
+                          name: Jane Smith
+                          email: jane.smith@example.com
+                          phone: null
+                        status: accepted
+                        createdAt: "2025-01-14T14:20:00Z"
+                        updatedAt: "2025-01-15T09:15:00Z"
+                    pagination:
+                      page: 1
+                      limit: 10
+                      total: 25
+                      totalPages: 3
+                      hasNext: true
+                      hasPrev: false
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                errorCode: VALIDATION_ERROR
+                message: Invalid status value
+                details:
+                  field: status
+                  value: invalid-status
+
+    post:
+      tags:
+        - Tickets
+      summary: Create ticket
+      description: Create a new support ticket with auto-generated ID and pending status
+      operationId: createTicket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketCreateRequest'
+            examples:
+              complete:
+                summary: Complete ticket with all fields
+                value:
+                  title: Cannot login to system
+                  description: Getting error 401 when trying to login with correct credentials. This issue started after the recent update.
+                  contact:
+                    name: John Doe
+                    email: john.doe@example.com
+                    phone: "+1-555-0100"
+              minimal:
+                summary: Minimal ticket without phone
+                value:
+                  title: Feature request
+                  description: Would like to have export functionality
+                  contact:
+                    name: Jane Smith
+                    email: jane.smith@example.com
+      responses:
+        '201':
+          description: Ticket created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Ticket created successfully
+                  data:
+                    $ref: '#/components/schemas/Ticket'
+              example:
+                success: true
+                message: Ticket created successfully
+                data:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  title: Cannot login to system
+                  description: Getting error 401 when trying to login with correct credentials. This issue started after the recent update.
+                  contact:
+                    name: John Doe
+                    email: john.doe@example.com
+                    phone: "+1-555-0100"
+                  status: pending
+                  createdAt: "2025-01-15T10:30:00Z"
+                  updatedAt: "2025-01-15T10:30:00Z"
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingTitle:
+                  summary: Missing required title
+                  value:
+                    success: false
+                    errorCode: VALIDATION_ERROR
+                    message: Title is required
+                invalidEmail:
+                  summary: Invalid email format
+                  value:
+                    success: false
+                    errorCode: VALIDATION_ERROR
+                    message: Valid email is required
+                    details:
+                      field: contact.email
+                      value: invalid-email
+
+  /tickets/{id}:
+    get:
+      tags:
+        - Tickets
+      summary: Get ticket details
+      description: Retrieve complete information for a specific ticket
+      operationId: getTicket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Ticket ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ticket details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Ticket'
+              example:
+                success: true
+                data:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  title: Cannot login to system
+                  description: Getting error 401 when trying to login
+                  contact:
+                    name: John Doe
+                    email: john.doe@example.com
+                    phone: "+1-555-0100"
+                  status: pending
+                  createdAt: "2025-01-15T10:30:00Z"
+                  updatedAt: "2025-01-15T10:30:00Z"
+        '404':
+          description: Ticket not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                errorCode: TICKET_NOT_FOUND
+                message: "Ticket with ID '550e8400-e29b-41d4-a716-446655440000' not found"
+
+    put:
+      tags:
+        - Tickets
+      summary: Update ticket information
+      description: |
+        Update ticket title, description, or contact information.
+        Status cannot be updated through this endpoint (use PATCH /tickets/{id}/status instead).
+        The updatedAt timestamp is automatically updated.
+      operationId: updateTicket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Ticket ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketUpdateRequest'
+            examples:
+              updateTitle:
+                summary: Update title only
+                value:
+                  title: Updated ticket title
+              updateAll:
+                summary: Update all fields
+                value:
+                  title: Updated title
+                  description: Updated description with more details
+                  contact:
+                    name: John Doe Jr.
+                    email: john.jr@example.com
+                    phone: "+1-555-0200"
+      responses:
+        '200':
+          description: Ticket updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Ticket updated successfully
+                  data:
+                    $ref: '#/components/schemas/Ticket'
+              example:
+                success: true
+                message: Ticket updated successfully
+                data:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  title: Updated ticket title
+                  description: Updated description
+                  contact:
+                    name: John Doe
+                    email: john.doe@example.com
+                    phone: "+1-555-0100"
+                  status: pending
+                  createdAt: "2025-01-15T10:30:00Z"
+                  updatedAt: "2025-01-15T11:45:00Z"
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                errorCode: VALIDATION_ERROR
+                message: Title cannot be empty
+        '404':
+          description: Ticket not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                errorCode: TICKET_NOT_FOUND
+                message: "Ticket with ID '550e8400-e29b-41d4-a716-446655440000' not found"
+
+  /tickets/{id}/status:
+    patch:
+      tags:
+        - Tickets
+      summary: Update ticket status
+      description: |
+        Update ticket status with validation of allowed state transitions.
+        
+        **Valid transitions (enforced server-side):**
+        - `pending` → `accepted` | `rejected`
+        - `accepted` → `resolved` | `rejected`
+        - `resolved` → (final state, no transitions allowed)
+        - `rejected` → (final state, no transitions allowed)
+        
+        The updatedAt timestamp is automatically updated.
+        
+        **Note:** While the schema accepts any valid status value, the server will validate
+        that the transition from the current status to the requested status is allowed.
+        Invalid transitions will result in a 422 Unprocessable Entity response.
+      operationId: updateTicketStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Ticket ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketStatusUpdateRequest'
+            examples:
+              acceptPending:
+                summary: Accept pending ticket
+                value:
+                  status: accepted
+              rejectPending:
+                summary: Reject pending ticket
+                value:
+                  status: rejected
+              resolveAccepted:
+                summary: Resolve accepted ticket
+                value:
+                  status: resolved
+      responses:
+        '200':
+          description: Status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Ticket status updated to 'accepted'
+                  data:
+                    $ref: '#/components/schemas/Ticket'
+              examples:
+                acceptedTicket:
+                  summary: Ticket accepted
+                  value:
+                    success: true
+                    message: Ticket status updated to 'accepted'
+                    data:
+                      id: 550e8400-e29b-41d4-a716-446655440000
+                      title: Cannot login to system
+                      description: Getting error 401 when trying to login
+                      contact:
+                        name: John Doe
+                        email: john.doe@example.com
+                        phone: "+1-555-0100"
+                      status: accepted
+                      createdAt: "2025-01-15T10:30:00Z"
+                      updatedAt: "2025-01-15T11:00:00Z"
+        '400':
+          description: Invalid status value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                errorCode: INVALID_STATUS
+                message: "Invalid status 'invalid-status'. Valid statuses: pending, accepted, resolved, rejected"
+        '404':
+          description: Ticket not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                errorCode: TICKET_NOT_FOUND
+                message: "Ticket with ID '550e8400-e29b-41d4-a716-446655440000' not found"
+        '422':
+          description: Invalid status transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                pendingToResolved:
+                  summary: Invalid transition from pending to resolved
+                  value:
+                    success: false
+                    errorCode: INVALID_STATUS_TRANSITION
+                    message: "Cannot transition from 'pending' to 'resolved'. Allowed transitions: accepted, rejected"
+                    details:
+                      currentStatus: pending
+                      targetStatus: resolved
+                      allowedTransitions: [accepted, rejected]
+                fromFinalState:
+                  summary: Cannot transition from final state
+                  value:
+                    success: false
+                    errorCode: INVALID_STATUS_TRANSITION
+                    message: "Cannot transition from 'resolved' to 'pending'. Allowed transitions: none (final state)"
+                    details:
+                      currentStatus: resolved
+                      targetStatus: pending
+                      allowedTransitions: []
+
+components:
+  schemas:
+    Ticket:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - contact
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique ticket identifier (auto-generated)
+          example: 550e8400-e29b-41d4-a716-446655440000
+        title:
+          type: string
+          maxLength: 255
+          description: Ticket title
+          example: Cannot login to system
+        description:
+          type: string
+          maxLength: 2000
+          description: Detailed description of the issue
+          example: Getting error 401 when trying to login with correct credentials
+        contact:
+          $ref: '#/components/schemas/Contact'
+        status:
+          type: string
+          enum: [pending, accepted, resolved, rejected]
+          description: Current ticket status
+          example: pending
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when ticket was created
+          example: "2025-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp of last update
+          example: "2025-01-15T10:30:00Z"
+
+    Contact:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+          description: Contact person's name
+          example: John Doe
+        email:
+          type: string
+          format: email
+          description: Contact email address
+          example: john.doe@example.com
+        phone:
+          type: [string, "null"]
+          pattern: '^[+]?[\d\s\-()]{7,20}$'
+          description: Optional phone number
+          example: "+1-555-0100"
+
+    TicketCreateRequest:
+      type: object
+      required:
+        - title
+        - description
+        - contact
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Ticket title
+          example: Cannot login to system
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Detailed description
+          example: Getting error 401 when trying to login
+        contact:
+          type: object
+          required:
+            - name
+            - email
+          properties:
+            name:
+              type: string
+              minLength: 1
+              description: Contact name
+              example: John Doe
+            email:
+              type: string
+              format: email
+              description: Contact email
+              example: john.doe@example.com
+            phone:
+              type: [string, "null"]
+              pattern: '^[+]?[\d\s\-()]{7,20}$'
+              description: Optional phone number
+              example: "+1-555-0100"
+
+    TicketUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Updated ticket title
+          example: Updated ticket title
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Updated description
+          example: Updated description with more details
+        contact:
+          type: object
+          properties:
+            name:
+              type: string
+              minLength: 1
+              example: John Doe Jr.
+            email:
+              type: string
+              format: email
+              example: john.jr@example.com
+            phone:
+              type: [string, "null"]
+              pattern: '^[+]?[\d\s\-()]{7,20}$'
+              example: "+1-555-0200"
+
+    TicketStatusUpdateRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [pending, accepted, resolved, rejected]
+          description: |
+            Target status for the ticket. Server-side validation enforces allowed transitions:
+            - From `pending`: can transition to `accepted` or `rejected`
+            - From `accepted`: can transition to `resolved` or `rejected`
+            - From `resolved`: no transitions allowed (final state)
+            - From `rejected`: no transitions allowed (final state)
+          example: accepted
+
+    TicketListResponse:
+      type: object
+      required:
+        - success
+        - data
+        - pagination
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ticket'
+        pagination:
+          type: object
+          required:
+            - page
+            - limit
+            - total
+            - totalPages
+            - hasNext
+            - hasPrev
+          properties:
+            page:
+              type: integer
+              minimum: 1
+              description: Current page number
+              example: 1
+            limit:
+              type: integer
+              minimum: 1
+              description: Items per page
+              example: 10
+            total:
+              type: integer
+              minimum: 0
+              description: Total number of tickets
+              example: 25
+            totalPages:
+              type: integer
+              minimum: 0
+              description: Total number of pages
+              example: 3
+            hasNext:
+              type: boolean
+              description: Whether there is a next page
+              example: true
+            hasPrev:
+              type: boolean
+              description: Whether there is a previous page
+              example: false
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - errorCode
+        - message
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          enum:
+            - VALIDATION_ERROR
+            - TICKET_NOT_FOUND
+            - INVALID_STATUS
+            - INVALID_STATUS_TRANSITION
+            - OPERATION_NOT_ALLOWED
+          description: Machine-readable error code
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          description: Human-readable error message
+          example: Title is required
+        details:
+          type: object
+          description: Additional error details (optional)
+          additionalProperties: true

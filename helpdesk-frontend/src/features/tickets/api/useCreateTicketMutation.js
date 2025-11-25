@@ -1,22 +1,23 @@
 import { useState } from 'react';
-import ticketsApiClient from './ticketsApiClient';
+import { createTicket } from '../../../api-client/helpdeskSupportTicketManagementSystemAPI';
 
 /**
- * Custom hook for creating a new ticket
- * @returns {Object} { createTicket, loading, error }
+ * Custom hook for creating a new ticket using Orval generated client
+ * @returns {Object} { createTicket: function, loading, error }
  */
 const useCreateTicketMutation = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  const createTicket = async (data) => {
+  const create = async (data) => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await ticketsApiClient.createTicket(data);
+      // Use Orval generated client
+      const response = await createTicket(data);
       setLoading(false);
-      return response;
+      return response.data?.data || response.data;
     } catch (err) {
       console.error('Error creating ticket:', err);
       setError(err.message || 'Failed to create ticket');
@@ -26,7 +27,7 @@ const useCreateTicketMutation = () => {
   };
   
   return {
-    createTicket,
+    createTicket: create,
     loading,
     error
   };

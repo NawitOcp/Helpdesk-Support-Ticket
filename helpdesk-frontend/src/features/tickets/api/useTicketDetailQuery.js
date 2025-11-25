@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import ticketsApiClient from './ticketsApiClient';
+import { getTicket } from '../../../api-client/helpdeskSupportTicketManagementSystemAPI';
 
 /**
- * Custom hook for fetching single ticket details
+ * Custom hook for fetching single ticket details using Orval generated client
  * @param {string|number} id - Ticket ID
  * @returns {Object} { ticket, loading, error, refetch }
  */
@@ -12,10 +12,7 @@ const useTicketDetailQuery = (id) => {
   const [error, setError] = useState(null);
   
   const fetchTicket = async () => {
-    console.log('🔍 Fetching ticket with ID:', id);
-    
     if (!id) {
-      console.warn('⚠️ No ticket ID provided');
       setLoading(false);
       return;
     }
@@ -24,14 +21,11 @@ const useTicketDetailQuery = (id) => {
     setError(null);
     
     try {
-      const response = await ticketsApiClient.getTicket(id);
-      console.log('✅ Ticket fetched successfully:', response);
-      
-      // Handle response format - might be { data: ticket } or just ticket
-      const ticketData = response.data || response;
-      setTicket(ticketData);
+      // Use Orval generated client
+      const response = await getTicket(id);
+      setTicket(response.data?.data || response.data);
     } catch (err) {
-      console.error('❌ Error fetching ticket:', err);
+      console.error('Error fetching ticket:', err);
       setError(err.message || 'Failed to fetch ticket');
       setTicket(null);
     } finally {

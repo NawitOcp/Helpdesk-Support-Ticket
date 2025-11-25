@@ -1,22 +1,23 @@
 import { useState } from 'react';
-import ticketsApiClient from './ticketsApiClient';
+import { updateTicketStatus } from '../../../api-client/helpdeskSupportTicketManagementSystemAPI';
 
 /**
- * Custom hook for updating ticket status
- * @returns {Object} { updateStatus, loading, error }
+ * Custom hook for updating ticket status using Orval generated client
+ * @returns {Object} { updateStatus: function, loading, error }
  */
 const useUpdateStatusMutation = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  const updateStatus = async (id, status) => {
+  const update = async (id, status) => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await ticketsApiClient.updateTicketStatus(id, status);
+      // Use Orval generated client
+      const response = await updateTicketStatus(id, { status });
       setLoading(false);
-      return response;
+      return response.data?.data || response.data;
     } catch (err) {
       console.error('Error updating status:', err);
       setError(err.message || 'Failed to update status');
@@ -26,7 +27,7 @@ const useUpdateStatusMutation = () => {
   };
   
   return {
-    updateStatus,
+    updateStatus: update,
     loading,
     error
   };

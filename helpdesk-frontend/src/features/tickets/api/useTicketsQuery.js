@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import ticketsApiClient from './ticketsApiClient';
+import { listTickets } from '../../../api-client/helpdeskSupportTicketManagementSystemAPI';
 
 /**
- * Custom hook for fetching tickets list
+ * Custom hook for fetching tickets list using Orval generated client
  * @param {Object} params - Query parameters (page, status, sortBy, etc.)
  * @returns {Object} { tickets, loading, error, totalPages, refetch }
  */
@@ -17,11 +17,18 @@ const useTicketsQuery = (params = {}) => {
     setError(null);
     
     try {
-      const response = await ticketsApiClient.getTickets(params);
+      // Use Orval generated client
+      const response = await listTickets({
+        page: params.page,
+        limit: params.limit,
+        status: params.status,
+        sortBy: params.sortBy,
+        sortOrder: params.sortOrder
+      });
       
-      // Handle different response formats
-      const ticketsData = response.tickets || response.data || [];
-      const pages = response.totalPages || response.pagination?.totalPages || 1;
+      // Extract data from response
+      const ticketsData = response.data?.data || [];
+      const pages = response.data?.pagination?.totalPages || 1;
       
       setTickets(ticketsData);
       setTotalPages(pages);
