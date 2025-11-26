@@ -282,3 +282,26 @@ For questions or issues, please contact: [Your Email]
 ---
 
 **Built with ❤️ for Nipa Cloud Technical Assessment**
+
+## 🐳 Docker Setup (Recommended)
+
+### Quick Start with Docker:
+```bash
+# 1. Make sure Docker Desktop is running
+
+# 2. Clone and run:
+git clone <repository-url>
+cd helpdesk-assignment
+docker-compose up
+
+# 3. Open browser:
+# Frontend: http://localhost:3000
+# Backend: http://localhost:5000/api
+```
+
+### Stop:
+```bash
+docker-compose down
+```
+
+See [DOCKER.md](DOCKER.md) for detailed instructions.
