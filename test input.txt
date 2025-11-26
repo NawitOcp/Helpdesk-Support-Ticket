@@ -1,0 +1,73 @@
+async function createTestTickets() {
+  const tickets = [
+    { title: 'Printer Issue', description: 'Printer not responding' },
+    { title: 'Login Problem', description: 'Cannot login to system' },
+    { title: 'Network Issue', description: 'Slow internet connection' },
+    { title: 'Computer Crash', description: 'PC keeps freezing' },
+    { title: 'Email Error', description: 'Not receiving emails' },
+    { title: 'Software Request', description: 'Need Adobe Photoshop' },
+    { title: 'VPN Problem', description: 'VPN not connecting' },
+    { title: 'Monitor Issue', description: 'Screen flickering' },
+    { title: 'Keyboard Broken', description: 'Keys not working' },
+    { title: 'Access Request', description: 'Need folder permissions' },
+    { title: 'Battery Drain', description: 'Laptop battery dies quickly' },
+    { title: 'WiFi Disconnect', description: 'WiFi drops frequently' },
+    { title: 'Phone Silent', description: 'Desk phone not ringing' },
+    { title: 'Update Failed', description: 'Windows update stuck' },
+    { title: 'Data Recovery', description: 'Deleted files by accident' }
+  ];
+
+  console.log(`🌱 Creating ${tickets.length} tickets...`);
+  let created = 0;
+  let failed = 0;
+
+  for (let i = 0; i < tickets.length; i++) {
+    const ticketData = {
+      title: tickets[i].title,
+      description: tickets[i].description,
+      contact: {
+        name: `Test User ${i + 1}`,
+        email: `user${i + 1}@example.com`,
+        phone: `081-${String(i + 1).padStart(3, '0')}-${String(i * 100).padStart(4, '0')}`
+      }
+    };
+
+    try {
+      const response = await fetch('/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ticketData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      const ticketId = result.data?.id || result.id;
+      
+      console.log(`✅ [${i + 1}/${tickets.length}] Created: "${tickets[i].title}" (${ticketId})`);
+      created++;
+
+      // รอ 200ms ก่อนสร้างตัวถัดไป
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+    } catch (error) {
+      console.error(`❌ [${i + 1}/${tickets.length}] Failed: "${tickets[i].title}"`, error.message);
+      failed++;
+    }
+  }
+
+  console.log('\n' + '='.repeat(50));
+  console.log(`✅ Success: ${created} tickets`);
+  console.log(`❌ Failed: ${failed} tickets`);
+  console.log('='.repeat(50));
+  
+  if (created > 0) {
+    console.log('\n🔄 Refreshing page in 2 seconds...');
+    setTimeout(() => window.location.reload(), 2000);
+  }
+}
+
+// เรียกใช้
+createTestTickets();

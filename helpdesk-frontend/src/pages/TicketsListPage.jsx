@@ -97,7 +97,25 @@ const TicketsListPage = () => {
     <AppLayout>
       {/* Page Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Tickets</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold text-gray-900">Tickets</h1>
+          
+          {/* View Toggle - เพิ่มส่วนนี้ */}
+          <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg p-1">
+            <button
+              className="px-3 py-1 rounded text-sm bg-blue-600 text-white"
+            >
+              List
+            </button>
+            <button
+              onClick={() => navigate('/tickets/board')}
+              className="px-3 py-1 rounded text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              Board
+            </button>
+          </div>
+        </div>
+        
         <Button onClick={() => navigate('/tickets/create')}>
           Create Ticket
         </Button>

@@ -1,0 +1,73 @@
+async function changeTicketStatuses() {
+  // ดึง tickets ทั้งหมด
+  const response = await fetch('/api/tickets?limit=100');
+  const data = await response.json();
+  const tickets = data.data || [];
+  
+  console.log(`📋 Found ${tickets.length} tickets`);
+  console.log('🔄 Changing some statuses...\n');
+
+  let changed = 0;
+
+  for (let i = 0; i < tickets.length; i++) {
+    const ticket = tickets[i];
+    
+    // ข้าม ticket ที่ไม่ใช่ pending
+    if (ticket.status !== 'pending') continue;
+
+    let newStatus;
+    
+    // สุ่ม status: 40% accepted, 30% resolved, 20% rejected, 10% pending (ไม่เปลี่ยน)
+    const rand = Math.random();
+    if (rand < 0.4) {
+      newStatus = 'accepted';
+    } else if (rand < 0.7) {
+      newStatus = 'resolved';
+    } else if (rand < 0.9) {
+      newStatus = 'rejected';
+    } else {
+      continue; // เก็บเป็น pending
+    }
+
+    try {
+      // ถ้าเป็น resolved ต้องไปที่ accepted ก่อน
+      if (newStatus === 'resolved') {
+        await fetch(`/api/tickets/${ticket.id}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'accepted' })
+        });
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        await fetch(`/api/tickets/${ticket.id}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'resolved' })
+        });
+        
+        console.log(`✅ "${ticket.title}": pending → accepted → resolved`);
+      } else {
+        await fetch(`/api/tickets/${ticket.id}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+        
+        console.log(`✅ "${ticket.title}": pending → ${newStatus}`);
+      }
+      
+      changed++;
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+    } catch (error) {
+      console.error(`❌ Failed to change "${ticket.title}":`, error.message);
+    }
+  }
+
+  console.log(`\n✅ Changed ${changed} ticket statuses`);
+  console.log('🔄 Refreshing page...');
+  setTimeout(() => window.location.reload(), 1000);
+}
+
+// เรียกใช้
+changeTicketStatuses();

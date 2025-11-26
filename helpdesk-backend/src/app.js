@@ -3,6 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import ticketRoutes from './api/routes/tickets.routes.js';
 import { errorHandler, notFoundHandler } from './api/middlewares/errorHandler.js';
+import kanbanRoutes from './api/routes/kanban.routes.js';
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api', ticketRoutes);
+app.use('/api', kanbanRoutes);
 
 // ======================
 // Error Handling

@@ -36,6 +36,7 @@ export class Ticket {
     this.description = description;
     this.contact = contact;
     this.status = status;
+    this.position = position || 0;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }
@@ -108,6 +109,7 @@ export const createTicket = ({ title, description, contact }) => {
       phone: contact?.phone?.trim() || null
     },
     status: TicketStatus.PENDING,
+    position: 0,
     createdAt: now,
     updatedAt: now
   });

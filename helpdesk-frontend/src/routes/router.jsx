@@ -4,6 +4,7 @@ import TicketsListPage from '../pages/TicketsListPage';
 import TicketDetailPage from '../pages/TicketDetailPage';
 import TicketCreatePage from '../pages/TicketCreatePage';
 import TicketEditPage from '../pages/TicketEditPage';
+import KanbanBoardPage from '../pages/KanbanBoardPage';
 
 /**
  * Application Router Configuration
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
   {
     path: '/tickets/:id/edit',
     element: <TicketEditPage />
+  },
+  {
+    path: '/tickets/board',
+    element: <KanbanBoardPage />
   },
   {
     path: '*',
